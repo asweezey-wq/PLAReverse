@@ -1,10 +1,11 @@
 #include "pokemonEntity.hpp"
+#include "pokemonData.hpp"
 #include <sstream>
 
 std::string PokemonEntity::toString() {
     std::stringstream ss;
     ss << "Pokemon:" << std::endl;
-    ss << "Species: " << m_species << std::endl;
+    ss << "Species: " << PokemonData::getSpeciesName(m_species) << "(" << m_species << ")" << std::endl;
     ss << "Shiny: " << (m_isShiny ? "YES": "NO") << std::endl;
     ss << "Alpha: " << (m_isAlpha ? "YES": "NO") << std::endl;
     ss << "Level: " << (uint32_t)m_level << std::endl;

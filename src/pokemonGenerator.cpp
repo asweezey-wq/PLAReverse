@@ -47,12 +47,3 @@ uint32_t shinyXor(uint32_t pid, uint32_t tid) {
     uint32_t value = pid ^ tid;
     return (value ^ (value >> 16)) & 0xffff;
 }
-
-void generatePokemonFromSlot(uint64_t seed, int shinyRolls, PokemonEntity& pokemonEntity) {
-    Xoroshiro128PlusRNG slotRng(seed);
-    float slotRoll = slotRng.nextFloat(100);
-    uint64_t pokemonGenSeed = slotRng.next();
-    generatePokemon(pokemonGenSeed, shinyRolls, pokemonEntity);
-    uint64_t level = slotRng.nextBool();
-    pokemonEntity.m_level = level;
-}
