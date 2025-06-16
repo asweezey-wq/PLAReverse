@@ -1,6 +1,52 @@
 #pragma once
+#include "json.hpp"
+#include "pokemonSlot.hpp"
+
 #include <cstdint>
 #include <string>
+#include <vector>
+#include <unordered_map>
+#include <fstream>
+
+using json = nlohmann::json;
+
+class PokemonData {
+public:
+    static void loadSpeciesFromFile(std::string filePath);
+
+    static void loadTablesFromFile(std::string filePath);
+
+    static PokemonSlot parseSlotFromJson(json jsonObj);
+
+    static uint32_t getSpeciesID(std::string name) { 
+        if (!m_speciesNameToId.contains(name)) {
+            fprintf(stderr, "Could not find Pokemon %s\n", name.c_str());
+            exit(1);
+        }
+        return m_speciesNameToId.at(name); 
+    }
+
+    static const std::string getSpeciesName(size_t id) {
+        if (id >= m_speciesIdToName.size()) {
+            fprintf(stderr, "Pokemon Species ID %ju out of bounds\n", id);
+            exit(1);
+        }
+        return m_speciesIdToName.at(id); 
+    }
+
+    static const PokemonSlotGroup& getSlotGroupTable(uint64_t table) {
+        if (!m_outbreakTables.contains(table)) {
+            fprintf(stderr, "Could not find Outbreak Table %llx\n", table);
+            exit(1);
+        }
+        return m_outbreakTables.at(table); 
+    }
+private:
+    static std::vector<std::string> m_speciesIdToName;
+    static std::unordered_map<std::string, uint32_t> m_speciesNameToId;
+
+    static std::unordered_map<uint64_t, PokemonSlotGroup> m_outbreakTables;
+};
 
 enum PokemonGender {
     MALE,

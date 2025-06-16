@@ -1,11 +1,7 @@
 #include "pokemonGenerator.hpp"
-#include "pokemonData.hpp"
+#include "pokemonEntity.hpp"
 #include "outbreakSpawner.hpp"
 #include <iostream>
-
-std::vector<std::string> PokemonData::m_speciesIdToName;
-std::unordered_map<std::string, uint32_t> PokemonData::m_speciesNameToId;
-std::unordered_map<uint64_t, PokemonSlotGroup> PokemonData::m_outbreakTables;
 
 int main(int, char**){
     PokemonData::loadSpeciesFromFile("resources/pokemonSpecies.txt");

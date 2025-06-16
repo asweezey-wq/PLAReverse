@@ -1,5 +1,5 @@
 #include "outbreakSpawner.hpp"
-#include "pokemonData.hpp"
+#include "pokemonEntity.hpp"
 #include "pokemonGenerator.hpp"
 #include "xoroshiro.hpp"
 
