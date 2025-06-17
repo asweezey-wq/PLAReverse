@@ -61,6 +61,9 @@ public:
         return (range * (nextValue * inv_64_f)) + bias;
     }
 
+    uint64_t getSeed0() { return m_seed0; }
+    uint64_t getSeed1() { return m_seed1; }
+
 private:
     uint64_t m_seed0, m_seed1;
 };
