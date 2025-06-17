@@ -9,7 +9,7 @@ OutbreakSpawner::OutbreakSpawner(uint64_t table) : m_tableId(table), m_slotGroup
 
 PokemonEntity OutbreakSpawner::createPokemon(uint64_t seed) {
     Xoroshiro128PlusRNG slotRng(seed);
-    float slotRoll = slotRng.nextFloat(m_slotGroup.getSlotRateSum());
+    float slotRoll = slotRng.nextFloat((float)m_slotGroup.getSlotRateSum());
     const PokemonSlot& slot = m_slotGroup.getSlot(slotRoll);
     uint64_t pokemonGenSeed = slotRng.next();
     PokemonEntity entity;

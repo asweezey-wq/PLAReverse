@@ -26,9 +26,9 @@ public:
         return m_speciesNameToId.at(name); 
     }
 
-    static const std::string getSpeciesName(size_t id) {
+    static const std::string getSpeciesName(uint32_t id) {
         if (id >= m_speciesIdToName.size()) {
-            fprintf(stderr, "Pokemon Species ID %ju out of bounds\n", id);
+            fprintf(stderr, "Pokemon Species ID %u out of bounds\n", id);
             exit(1);
         }
         return m_speciesIdToName.at(id); 

@@ -2,6 +2,7 @@
 
 void generatePokemon(uint64_t seed, int shinyRolls, PokemonEntity& entity) {
     Xoroshiro128PlusRNG rng(seed);
+    printf("Pokemon gen seed: %jx\n", seed);
     entity.m_encrConst = rng.nextUint32();
     uint32_t fakeTID = rng.nextUint32();
     for (int i = 0; i < shinyRolls; i++) {
