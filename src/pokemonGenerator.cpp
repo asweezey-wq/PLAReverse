@@ -1,8 +1,8 @@
 #include "pokemonGenerator.hpp"
 
-void generatePokemon(uint64_t seed, int shinyRolls, PokemonEntity& entity) {
+void generatePokemon(uint64_t seed, int shinyRolls, uint8_t genderRatio, PokemonEntity& entity) {
     Xoroshiro128PlusRNG rng(seed);
-    printf("Pokemon gen seed: %jx\n", seed);
+    entity.m_genSeed = seed;
     entity.m_encrConst = rng.nextUint32();
     uint32_t fakeTID = rng.nextUint32();
     for (int i = 0; i < shinyRolls; i++) {
@@ -30,12 +30,10 @@ void generatePokemon(uint64_t seed, int shinyRolls, PokemonEntity& entity) {
     }
     for (int i = 0; i < 6; i++) {
         if (entity.m_ivs[i] == IV_UNSET) {
-            printf("Seed before IV: %u %u\n", rng.getSeed0() & 31, rng.getSeed1() & 31);
             entity.m_ivs[i] = (uint8_t)rng.nextWithMax(32);
         }
     }
     entity.m_ability = (uint8_t)rng.nextWithMax(2);
-    uint8_t genderRatio = 128;
     uint8_t genderRNG = (uint8_t)rng.nextWithMax(253) + 1;
     entity.m_gender = genderRNG < genderRatio ? FEMALE : MALE;
 

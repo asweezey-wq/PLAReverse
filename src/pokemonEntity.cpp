@@ -2,13 +2,16 @@
 #include <sstream>
 
 std::vector<std::string> PokemonData::m_speciesIdToName;
+std::vector<SpeciesData> PokemonData::m_speciesIdToData;
 std::unordered_map<std::string, uint32_t> PokemonData::m_speciesNameToId;
+std::vector<std::string> PokemonData::m_abilityIdToName;
+std::unordered_map<std::string, uint32_t> PokemonData::m_abilityNameToId;
 std::unordered_map<uint64_t, PokemonSlotGroup> PokemonData::m_outbreakTables;
 
-void PokemonData::loadSpeciesFromFile(std::string filePath) {
+void PokemonData::loadSpeciesNamesFromFile(std::string filePath) {
     std::ifstream ifs(filePath);
     if (!ifs.is_open()) {
-        fprintf(stderr, "Could not open species file %s\n", filePath.c_str());
+        fprintf(stderr, "Could not open species name file %s\n", filePath.c_str());
         exit(1);
     }
     std::string line;
@@ -17,6 +20,56 @@ void PokemonData::loadSpeciesFromFile(std::string filePath) {
     }
     for (int i = 0; i < m_speciesIdToName.size(); i++) {
         m_speciesNameToId[m_speciesIdToName[i]] = i;
+    }
+}
+
+void PokemonData::loadSpeciesDataFromFile(std::string filePath) {
+    std::ifstream ifs(filePath);
+    if (!ifs.is_open()) {
+        fprintf(stderr, "Could not open species data file %s\n", filePath.c_str());
+        exit(1);
+    }
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::stringstream ss(line);
+        std::string part;
+        SpeciesData data;
+        std::getline(ss, part, ',');
+        data.index = std::stoul(part);
+        for (int i = 0; i < 6; i++) {
+            std::getline(ss, part, ',');
+            data.baseStats[i] = (uint8_t)std::stoul(part);
+        }
+        std::getline(ss, part, ',');
+        data.baseHeight = std::stoul(part);
+        std::getline(ss, part, ',');
+        data.baseWeight = std::stoul(part);
+        std::getline(ss, part, ',');
+        data.genderRatio = (uint8_t)std::stoul(part);
+        std::getline(ss, part, ',');
+        data.abilities[0] = std::stoul(part);
+        std::getline(ss, part, ',');
+        data.abilities[1] = std::stoul(part);
+        if (data.index != m_speciesIdToData.size()) {
+            fprintf(stderr, "Species %zu invalid data\n", m_speciesIdToData.size());
+            exit(1);
+        }
+        m_speciesIdToData.push_back(data);
+    }
+}
+
+void PokemonData::loadAbilityNamesFromFile(std::string filePath) {
+    std::ifstream ifs(filePath);
+    if (!ifs.is_open()) {
+        fprintf(stderr, "Could not open ability name file %s\n", filePath.c_str());
+        exit(1);
+    }
+    std::string line;
+    while (std::getline(ifs, line)) {
+        m_abilityIdToName.push_back(line);
+    }
+    for (int i = 0; i < m_abilityIdToName.size(); i++) {
+        m_speciesNameToId[m_abilityIdToName[i]] = i;
     }
 }
 

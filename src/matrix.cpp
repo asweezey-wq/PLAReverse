@@ -82,7 +82,8 @@ GF2Matrix gf2Inverse(const GF2Matrix& A) {
         int col = pivots[i];
         std::swap(transformMat[i], transformMat[col]);
     }
-    transformMat.resize(cols(A));
+    int n = cols(transformMat);
+    transformMat.resize(cols(A), GF2Vector(n, 0));
     return transformMat;
 }
 

@@ -1,0 +1,115 @@
+{
+    "shinyRolls": 17,
+    "pokemon": [
+        {
+            "name": "Swinub",
+            "nature": "Gentle",
+            "ability": 1,
+            "gender": "F",
+            "effortLevels": [0,0,0,0,3,2],
+            "ratings": ["Decent", "PrettyGood", "PrettyGood", "Decent", "Best", "VeryGood"],
+            "sizes": [
+                {
+                    "height_feet": 1,
+                    "height_inches": 3,
+                    "weight_lbs": 15.6
+                },
+                {
+                    "name": "Piloswine",
+                    "height_feet": 3,
+                    "height_inches": 6,
+                    "weight_lbs": 135.9
+                },
+                {
+                    "name": "Mamoswine",
+                    "height_feet": 7,
+                    "height_inches": 10,
+                    "weight_lbs": 708.9
+                }
+            ],
+            "stats": [
+                {
+                    "level": 32,
+                    "stats": [74, 42, 32, 28, 37, 45]
+                },
+                {
+                    "level": 33,
+                    "stats": [76, 43, 33, 29, 38, 46]
+                },
+                {
+                    "name": "Piloswine",
+                    "level": 33,
+                    "stats": [109, 76, 56, 48, 59, 46]
+                },
+                {
+                    "name": "Piloswine",
+                    "level": 34,
+                    "stats": [112, 78, 58, 50, 61, 48]
+                }
+            ]
+        },
+        {
+            "name": "Swinub",
+            "nature": "Bashful",
+            "ability": 0,
+            "gender": "F",
+            "effortLevels": [0,1,1,1,0,0],
+            "ratings": ["Decent", "PrettyGood", "PrettyGood", "PrettyGood", "PrettyGood", "Decent"],
+            "sizes": [
+                {
+                    "height_feet": 1,
+                    "height_inches": 5,
+                    "weight_lbs": 16
+                }
+            ],
+            "stats": [
+                {
+                    "level": 31,
+                    "stats": [73, 42, 36, 31, 28, 38]
+                }
+            ]
+        },
+        {
+            "name": "Swinub",
+            "nature": "Hardy",
+            "ability": 1,
+            "gender": "M",
+            "effortLevels": [0,0,0,0,0,1],
+            "ratings": ["Decent", "PrettyGood", "Decent", "PrettyGood", "Decent", "PrettyGood"],
+            "sizes": [
+                {
+                    "height_feet": 1,
+                    "height_inches": 5,
+                    "weight_lbs": 15
+                }
+            ],
+            "stats": [
+                {
+                    "level": 32,
+                    "stats": [75, 43, 33, 30, 27, 44]
+                }
+            ]
+        },
+        {
+            "name": "Swinub",
+            "nature": "Naughty",
+            "ability": 1,
+            "gender": "M",
+            "effortLevels": [1,1,2,0,0,0],
+            "ratings": ["PrettyGood", "PrettyGood", "VeryGood", "Decent", "Decent", "PrettyGood"],
+            "sizes": [
+                {
+                    "height_feet": 1,
+                    "height_inches": 3,
+                    "weight_lbs": 12.9
+                }
+            ],
+            "stats": [
+                {
+                    "level": 30,
+                    "stats": [77, 45, 37, 25, 22, 40]
+                }
+            ]
+        }
+    ]
+}
