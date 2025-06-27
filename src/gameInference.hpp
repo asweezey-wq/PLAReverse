@@ -1,35 +1,6 @@
 #pragma once
-#include <cstdint>
+#include "pokemonData.hpp"
 #include <string>
-#include "pokemonEntity.hpp"
-
-enum Nature : uint8_t {
-    Hardy = 0,
-    Lonely,
-    Brave,
-    Adamant,
-    Naughty,
-    Bold,
-    Docile,
-    Relaxed,
-    Impish,
-    Lax,
-    Timid,
-    Hasty,
-    Serious,
-    Jolly,
-    Naive,
-    Modest,
-    Mild,
-    Quiet,
-    Bashful,
-    Rash,
-    Calm,
-    Gentle,
-    Sassy,
-    Careful,
-    Quirky
-};
 
 enum Stat : int {
     HP = 0,
@@ -45,7 +16,7 @@ struct NatureEffect {
     int decreased;
 };
 
-// Indexed by Nature enum
+// Indexed by nature
 constexpr NatureEffect NATURE_EFFECTS[25] = {
     {Attack, Attack},     // Hardy (neutral)
     {Attack, Defense},    // Lonely
@@ -74,16 +45,8 @@ constexpr NatureEffect NATURE_EFFECTS[25] = {
     {SpDefense, SpDefense}// Quirky (neutral)
 };
 
-constexpr std::string STAT_NAMES[] = {
+const std::string STAT_NAMES[] = {
     "HP", "Attack", "Defense", "Sp. Attack", "Sp. Defense", "Speed"
-};
-
-constexpr std::string NATURE_NAMES[] = {
-    "Hardy", "Lonely", "Brave", "Adamant", "Naughty",
-    "Bold", "Docile", "Relaxed", "Impish", "Lax",
-    "Timid", "Hasty", "Serious", "Jolly", "Naive",
-    "Modest", "Mild", "Quiet", "Bashful", "Rash",
-    "Calm", "Gentle", "Sassy", "Careful", "Quirky"
 };
 
 enum JudgeIVRating {
@@ -121,7 +84,7 @@ enum SpeciesShinyInfo : uint8_t {
 };
 
 int getShinyRolls(uint8_t info);
-constexpr float getNatureModifier(Nature nature, int stat);
+constexpr float getNatureModifier(uint8_t nature, int stat);
 int calculateHP(uint8_t base, uint8_t iv, uint8_t ev, uint8_t level);
 int calculateOtherStat(uint8_t base, uint8_t iv, uint8_t ev, uint8_t level, float natureMod);
 
@@ -132,8 +95,9 @@ struct ObservedStatInstance {
     int level;
     uint32_t stats[6];
 };
-void calculateIVRanges(uint8_t effortLevels[6], JudgeIVRating ratings[6], Nature nature, const std::vector<ObservedStatInstance> observedStats, uint8_t ivRanges[6][2]);
-int getNumIVPermutations(uint8_t ivRanges[6][2]);
+void restrictRangesForActualStats(const ObservedStatInstance& observedStats, uint8_t nature, uint8_t ivRanges[6][2]);
+void calculateIVRanges(uint8_t effortLevels[6], JudgeIVRating ratings[6], uint8_t nature, const std::vector<ObservedStatInstance> observedStats, uint8_t ivRanges[6][2]);
+int getNumIVPermutations(const uint8_t ivRanges[6][2]);
 
 void getDisplaySize(const SpeciesData& speciesData, bool imperial, uint8_t height, uint8_t weight, float& dispHeight, float& dispWeight);
 std::string heightToString(bool imperial, float dispHeight);
@@ -147,6 +111,3 @@ struct ObservedSizeInstance {
 };
 void calculateSizeRange(const SpeciesData& speciesData, bool imperial, float dispHeight, float dispWeight, uint32_t heightRange[2], uint32_t weightRange[2]);
 void calculateSizeRanges(bool imperial, const std::vector<ObservedSizeInstance> sizes, uint32_t heightRange[2], uint32_t weightRange[2]);
-
-
-void statTesting();

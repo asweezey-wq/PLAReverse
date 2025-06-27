@@ -1,6 +1,5 @@
 #pragma once
-#include "pokemonSlot.hpp"
-#include "pokemonEntity.hpp"
+#include "pokemonData.hpp"
 #include <vector>
 
 class OutbreakSpawner {
@@ -14,3 +13,5 @@ private:
     uint64_t m_tableId{0};
     const PokemonSlotGroup& m_slotGroup;
 };
+
+void generatePokemon(uint64_t seed, int shinyRolls, uint32_t species, int numPerfectIVs, PokemonEntity& pokemonEntity);

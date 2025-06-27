@@ -1,4 +1,4 @@
-#include "pokemonEntity.hpp"
+#include "pokemonData.hpp"
 #include <sstream>
 
 std::vector<std::string> PokemonData::m_speciesIdToName;
@@ -69,7 +69,7 @@ void PokemonData::loadAbilityNamesFromFile(std::string filePath) {
         m_abilityIdToName.push_back(line);
     }
     for (int i = 0; i < m_abilityIdToName.size(); i++) {
-        m_speciesNameToId[m_abilityIdToName[i]] = i;
+        m_abilityNameToId[m_abilityIdToName[i]] = i;
     }
 }
 
@@ -125,15 +125,17 @@ PokemonSlot PokemonData::parseSlotFromJson(json jsonObj) {
 }
 
 std::string PokemonEntity::toString() {
+    auto data = PokemonData::getSpeciesData(m_species);
     std::stringstream ss;
-    ss << "Pokemon:" << std::endl;
-    ss << "Species: " << PokemonData::getSpeciesName(m_species) << "(" << m_species << ")" << std::endl;
-    ss << "Shiny: " << (m_isShiny ? "YES": "NO") << std::endl;
-    ss << "Alpha: " << (m_isAlpha ? "YES": "NO") << std::endl;
-    ss << "Level: " << (uint32_t)m_level << std::endl;
-    ss << "Gender: " << (uint32_t)m_gender << std::endl;
-    ss << "EC: " << std::hex << m_encrConst << std::endl;
-    ss << "PID: " << std::hex << m_pid << std::endl;
+    ss << "Pokemon: " << PokemonData::getSpeciesName(m_species) << "(" << m_species << ")" << std::endl;
+    ss << "Lvl " << (uint32_t)m_level;
+    ss << "\tShiny: " << (m_isShiny ? "YES": "NO");
+    ss << "\tAlpha: " << (m_isAlpha ? "YES": "NO") << std::endl;
+    ss << "Gender: " << GENDER_NAMES[m_gender];
+    ss << "\tAbility: " << PokemonData::getAbilityName(data.abilities[m_ability]);
+    ss << "\tNature: " << NATURE_NAMES[m_nature] << std::endl;
+    ss << "EC: " << std::hex << m_encrConst;
+    ss << "\tPID: " << std::hex << m_pid << std::endl;
     ss << "IVS: ";
     for (int i = 0; i < 6; i++) {
         ss << std::dec << (uint32_t)m_ivs[i];
@@ -142,9 +144,23 @@ std::string PokemonEntity::toString() {
         }
     }
     ss << std::endl;
-    ss << "Ability: " << (uint32_t)m_ability << std::endl;
-    ss << "Nature: " << (uint32_t)m_nature << std::endl;
-    ss << "Height: " << (uint32_t)m_height << std::endl;
-    ss << "Weight: " << (uint32_t)m_weight << std::endl;
+    ss << "Height: " << (uint32_t)m_height;
+    ss << "\tWeight: " << (uint32_t)m_weight << std::endl;
     return ss.str();
+}
+
+void PokemonSlotGroup::addSlot(PokemonSlot slot) {
+    m_slots.emplace_back(slot);
+    m_slotRateSum += slot.m_rate;
+}
+
+const PokemonSlot& PokemonSlotGroup::getSlot(float slotRng) const {
+    for (const auto& slot : m_slots) {
+        slotRng -= slot.m_rate;
+        if (slotRng <= 0) {
+            return slot;
+        }
+    }
+    fprintf(stderr, "Invalid Slot RNG\n");
+    exit(1); 
 }

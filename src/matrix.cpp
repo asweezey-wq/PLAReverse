@@ -7,24 +7,58 @@
 #include <iostream>
 #include <assert.h>
 
-int rows(const GF2Matrix& A) {
+size_t rows(const GF2Matrix& A) {
     return A.size();
 }
 
-int cols(const GF2Matrix& A) {
+size_t cols(const GF2Matrix& A) {
     return A.size() == 0 ? 0 : A[0].size();
 }
 
-GF2Matrix gf2Init(int rows, int cols) {
+GF2Matrix gf2Init(size_t rows, size_t cols) {
     return GF2Matrix(rows, GF2Vector(cols, 0));
 }
 
-GF2Matrix gf2Identity(int size) {
+GF2Matrix gf2Identity(size_t size) {
     GF2Matrix mat = gf2Init(size, size);
     for (int i = 0; i < size; i++) {
         mat[i][i] = 1;
     }
     return mat;
+}
+
+GF2Matrix gf2Rotl(size_t size, int amount) {
+    GF2Matrix mat = gf2Init(size, size);
+    for (int i = 0; i < size; i++) {
+        mat[i][(i + amount) % size] = 1;
+    }
+    return mat;
+}
+
+GF2Matrix gf2Rotr(size_t size, int amount) {
+    return gf2Rotl(size, (int)size - amount);
+}
+
+GF2Matrix gf2Shiftl(size_t size, int amount) {
+    GF2Matrix mat = gf2Init(size, size);
+    for (int i = 0; i < size; i++) {
+        int index = i + amount;
+        if (index < size) {
+            mat[i][index] = 1;
+        }
+    }
+    return mat;
+}
+
+GF2Matrix gf2Xor(const GF2Matrix& A, const GF2Matrix& B) {
+    assert(cols(A) == cols(B) && rows(A) == rows(B));
+    GF2Matrix result = gf2Init(rows(A), cols(A));
+    for (int i = 0; i < rows(result); i++) {
+        for (int j = 0; j < cols(result); j++) {
+            result[i][j] = A[i][j] ^ B[i][j];
+        }
+    }
+    return result;
 }
 
 GF2Matrix gf2Multiply(const GF2Matrix& A, const GF2Matrix& B) {
@@ -43,8 +77,8 @@ GF2Matrix gf2Multiply(const GF2Matrix& A, const GF2Matrix& B) {
 }
 
 GF2Matrix gf2Echelon(const GF2Matrix& A, GF2Matrix& transformMat, int& rank, std::vector<int>& pivots) {
-    int m = rows(A);
-    int n = cols(A);
+    int m = (int)rows(A);
+    int n = (int)cols(A);
     GF2Matrix echelonMat = GF2Matrix(A);
     transformMat = gf2Identity(m);
     rank = 0;
@@ -82,7 +116,7 @@ GF2Matrix gf2Inverse(const GF2Matrix& A) {
         int col = pivots[i];
         std::swap(transformMat[i], transformMat[col]);
     }
-    int n = cols(transformMat);
+    size_t n = cols(transformMat);
     transformMat.resize(cols(A), GF2Vector(n, 0));
     return transformMat;
 }
@@ -103,7 +137,7 @@ GF2Matrix gf2NullBasis(const GF2Matrix& A) {
 
 GF2Matrix gf2NullSpace(const GF2Matrix& A) {
     GF2Matrix basis = gf2NullBasis(A);
-    GF2Matrix space = gf2Init(1 << rows(basis), cols(basis));
+    GF2Matrix space = gf2Init(1ull << rows(basis), cols(basis));
     for (int i = 0; i < rows(space); i++) {
         for (int j = 0; j < rows(basis); j++) {
             if ((i >> j) & 1) {
