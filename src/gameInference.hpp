@@ -111,3 +111,4 @@ struct ObservedSizeInstance {
 };
 void calculateSizeRange(const SpeciesData& speciesData, bool imperial, float dispHeight, float dispWeight, uint32_t heightRange[2], uint32_t weightRange[2]);
 void calculateSizeRanges(bool imperial, const std::vector<ObservedSizeInstance> sizes, uint32_t heightRange[2], uint32_t weightRange[2]);
+std::vector<std::pair<uint32_t, uint32_t>> calculateSizePairs(bool imperial,const std::vector<ObservedSizeInstance> sizes);

@@ -3,7 +3,9 @@
 #include "pokemonCuda.h"
 #include "gameInference.hpp"
 #include "xoroshiro.hpp"
+#include "ui/MainWindow.h"
 #include <iostream>
+#include <QApplication>
 
 void reversal() {
     const int shinyRolls = 17;
@@ -119,10 +121,15 @@ void spawner() {
 int main(int argc, char** argv){
     PokemonData::loadSpeciesNamesFromFile("resources/pokemonSpecies.txt");
     PokemonData::loadSpeciesDataFromFile("resources/pokemonData.txt");
+    PokemonData::loadSpeciesEvolutionsFromFile("resources/pokemonEvolutions.txt");
     PokemonData::loadAbilityNamesFromFile("resources/pokemonAbilities.txt");
     PokemonData::loadTablesFromFile("resources/plaMMOTables.txt");
     
     // spawner();
     // seedFind(argv[1]);
-    reversal();
+    // reversal();
+    QApplication app(argc, argv);
+    MainWindow window;
+    window.show();
+    return app.exec();
 }

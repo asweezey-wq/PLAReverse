@@ -4,6 +4,7 @@
 std::vector<std::string> PokemonData::m_speciesIdToName;
 std::vector<SpeciesData> PokemonData::m_speciesIdToData;
 std::unordered_map<std::string, uint32_t> PokemonData::m_speciesNameToId;
+std::unordered_map<uint32_t, std::vector<uint32_t>> PokemonData::m_speciesEvolutions;
 std::vector<std::string> PokemonData::m_abilityIdToName;
 std::unordered_map<std::string, uint32_t> PokemonData::m_abilityNameToId;
 std::unordered_map<uint64_t, PokemonSlotGroup> PokemonData::m_outbreakTables;
@@ -55,6 +56,27 @@ void PokemonData::loadSpeciesDataFromFile(std::string filePath) {
             exit(1);
         }
         m_speciesIdToData.push_back(data);
+    }
+}
+
+void PokemonData::loadSpeciesEvolutionsFromFile(std::string filePath) {
+    std::ifstream ifs(filePath);
+    if (!ifs.is_open()) {
+        fprintf(stderr, "Could not open species evolution file %s\n", filePath.c_str());
+        exit(1);
+    }
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::stringstream ss(line);
+        std::string pokemon,evoList;
+        std::getline(ss, pokemon, ':');
+        std::getline(ss, evoList);
+        auto& vec = m_speciesEvolutions[getSpeciesID(pokemon)];
+        std::stringstream ss2(evoList);
+        std::string evolvedPokemon;
+        while (std::getline(ss2, evolvedPokemon, ',')) {
+            vec.push_back(getSpeciesID(evolvedPokemon));
+        }
     }
 }
 

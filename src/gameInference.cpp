@@ -96,7 +96,7 @@ void calculateIVRanges(uint8_t effortLevels[6], JudgeIVRating ratings[6], uint8_
 }
 
 float getSizeRatio(uint8_t value) {
-    return ((value / 255.0f) * 0.4f) + 0.8f;
+    return ((value / 255.0f) * 0.40000004f) + 0.8f;
 }
 
 void getDisplaySize(const SpeciesData& speciesData, bool imperial, uint8_t height, uint8_t weight, float& dispHeight, float& dispWeight) {
@@ -167,6 +167,37 @@ void calculateSizeRanges(bool imperial, const std::vector<ObservedSizeInstance> 
         weightRange[0] = std::max(weightRange[0], wRange[0]);
         weightRange[1] = std::min(weightRange[1], wRange[1]);
     }
+}
+
+std::vector<std::pair<uint32_t, uint32_t>> calculateSizePairs(bool imperial, const std::vector<ObservedSizeInstance> sizes) {
+    std::vector<std::pair<uint32_t, uint32_t>> pairs;
+    const float heightEpsilon = imperial ? 0.1f : 0.1f;
+    const float weightEpsilon = imperial ? 0.1f : 0.1f;
+    for (int i = 0; i < 256; i++) {
+        for (int j = 0; j < 256; j++) {
+            bool valid = true;
+            uint8_t heightByte = (uint8_t)i;
+            uint8_t weightByte = (uint8_t)j;
+            float computedDispHeight, computedDispWeight;
+            for (auto& size : sizes) {
+                getDisplaySize(PokemonData::getSpeciesData(size.speciesId), imperial, heightByte, weightByte, computedDispHeight, computedDispWeight);
+                float heightDiff = std::abs(computedDispHeight - size.height);
+                if (heightDiff >= heightEpsilon) {
+                    valid = false;
+                    break;
+                }
+                float weightDiff = std::abs(computedDispWeight - size.weight);
+                if (weightDiff >= weightEpsilon) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                pairs.emplace_back(i, j);
+            }
+        }
+    }
+    return pairs;
 }
 
 std::string heightToString(bool imperial, float dispHeight) {

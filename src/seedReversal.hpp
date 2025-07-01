@@ -15,5 +15,6 @@ SeedReversalContext createReversalCtxForCUDA(int numShinyRolls, const PokemonSlo
 PokemonVerificationContext createOracleVerifyStructForCUDA(const PokemonEntity& entity, const PokemonSlotGroup& slotGroup);
 uint64_t getExpectedSeeds(const PokemonVerificationContext& verifyConst);
 uint64_t getTheoreticalGeneratorSeeds(const PokemonVerificationContext& verifyConst, uint32_t slotRateSum);
+void getPossibleSizes(const uint32_t heightRange[2], const uint32_t weightRange[2], uint32_t& numHeights, uint32_t& numWeights);
 
 void parseJSONMMOEncounter(std::string filePath, std::vector<PokemonVerificationContext>& pokemon, int& numShinyRolls, uint64_t& tableID);

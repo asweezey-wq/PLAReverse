@@ -87,6 +87,7 @@ class PokemonData {
 public:
     static void loadSpeciesNamesFromFile(std::string filePath);
     static void loadSpeciesDataFromFile(std::string filePath);
+    static void loadSpeciesEvolutionsFromFile(std::string filePath);
     static void loadAbilityNamesFromFile(std::string filePath);
     static void loadTablesFromFile(std::string filePath);
 
@@ -116,6 +117,18 @@ public:
         return m_speciesIdToData.at(id); 
     }
 
+    static bool speciesHasEvolutions(uint32_t id) {
+        return m_speciesEvolutions.contains(id);
+    }
+
+    static const std::vector<uint32_t> getSpeciesEvolutions(uint32_t id) {
+        if (!m_speciesEvolutions.contains(id)) {
+            fprintf(stderr, "Pokemon Species ID %u out of bounds\n", id);
+            exit(1);
+        }
+        return m_speciesEvolutions.at(id); 
+    }
+
     static uint32_t getAbilityID(std::string name) { 
         if (!m_abilityNameToId.contains(name)) {
             fprintf(stderr, "Could not find ability %s\n", name.c_str());
@@ -139,10 +152,19 @@ public:
         }
         return m_outbreakTables.at(table); 
     }
+
+    static const std::vector<std::string> getAllPokemonNames() {
+        return m_speciesIdToName;
+    }
+
+    static const std::unordered_map<uint64_t, PokemonSlotGroup> getOutbreakTables() {
+        return m_outbreakTables;
+    }
 private:
     static std::vector<std::string> m_speciesIdToName;
     static std::vector<SpeciesData> m_speciesIdToData;
     static std::unordered_map<std::string, uint32_t> m_speciesNameToId;
+    static std::unordered_map<uint32_t, std::vector<uint32_t>> m_speciesEvolutions;
     static std::vector<std::string> m_abilityIdToName;
     static std::unordered_map<std::string, uint32_t> m_abilityNameToId;
 

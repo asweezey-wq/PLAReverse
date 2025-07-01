@@ -157,6 +157,22 @@ PokemonVerificationContext createOracleVerifyStructForCUDA(const PokemonEntity& 
     return verify;
 }
 
+void getPossibleSizes(const uint32_t heightRange[2], const uint32_t weightRange[2], uint32_t& numHeights, uint32_t& numWeights) {
+    numHeights = 0;
+    numWeights = 0;
+    for (int i = 0; i < 129; i++) {
+        for (int j = 0; j < 128; j++) {
+            uint32_t sum = i + j;
+            if (sum >= heightRange[0] && sum <= heightRange[1]) {
+                numHeights += 1;
+            }
+            if (sum >= weightRange[0] && sum <= weightRange[1]) {
+                numWeights += 1;
+            } 
+        }
+    }
+}
+
 uint64_t getExpectedSeeds(const PokemonVerificationContext& verifyConst) {
     auto& data = PokemonData::getSpeciesData(verifyConst.speciesId);
     bool genderless = verifyConst.genderData[1] == GENDERLESS || data.genderRatio >= 254 || data.genderRatio == 0;
@@ -167,19 +183,8 @@ uint64_t getExpectedSeeds(const PokemonVerificationContext& verifyConst) {
             genderOdds = 1.0f - genderOdds;
         }
     }
-    int numHeights = 0;
-    int numWeights = 0;
-    for (int i = 0; i < 129; i++) {
-        for (int j = 0; j < 128; j++) {
-            uint32_t sum = i + j;
-            if (sum >= verifyConst.height[0] && sum <= verifyConst.height[1]) {
-                numHeights += 1;
-            }
-            if (sum >= verifyConst.weight[0] && sum <= verifyConst.weight[1]) {
-                numWeights += 1;
-            } 
-        }
-    }
+    uint32_t numHeights, numWeights;
+    getPossibleSizes(verifyConst.height, verifyConst.weight, numHeights, numWeights);
     double allPossibleSizes = (129 * 128);
     double sizeOdds = (numHeights / allPossibleSizes) * (numWeights / allPossibleSizes);
     uint64_t numIVCombos = getNumIVPermutations(verifyConst.ivs);
@@ -199,19 +204,8 @@ uint64_t getTheoreticalGeneratorSeeds(const PokemonVerificationContext& verifyCo
             genderOdds = 1.0f - genderOdds;
         }
     }
-    int numHeights = 0;
-    int numWeights = 0;
-    for (int i = 0; i < 129; i++) {
-        for (int j = 0; j < 128; j++) {
-            uint32_t sum = i + j;
-            if (sum >= verifyConst.height[0] && sum <= verifyConst.height[1]) {
-                numHeights += 1;
-            }
-            if (sum >= verifyConst.weight[0] && sum <= verifyConst.weight[1]) {
-                numWeights += 1;
-            } 
-        }
-    }
+    uint32_t numHeights, numWeights;
+    getPossibleSizes(verifyConst.height, verifyConst.weight, numHeights, numWeights);
     double allPossibleSizes = (129 * 128);
     double sizeOdds = (numHeights / allPossibleSizes) * (numWeights / allPossibleSizes);
     double abilityModifier = 2;
