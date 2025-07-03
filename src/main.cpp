@@ -8,13 +8,14 @@
 #include <QApplication>
 
 void reversal() {
-    const int shinyRolls = 17;
-    uint64_t trueGroupSeed = 0xc0ffee;
-    uint64_t slotGroupNumber = 0xC44A139615D5807E;
-    uint32_t species = PokemonData::getSpeciesID("Machop");
+    ShinyRollData shinyRolls;
+    uint64_t trueGroupSeed = 6267248544019265885;
+    uint64_t slotGroupNumber = 0x00C756FF484B9DD6;
+    uint32_t species = PokemonData::getSpeciesID("Swinub");
+    shinyRolls[species] = 17;
     auto data = PokemonData::getSpeciesData(species);
     auto slotGroup = PokemonData::getSlotGroupTable(slotGroupNumber);
-    OutbreakSpawner spawner(slotGroup);
+    OutbreakSpawner spawner(slotGroup, shinyRolls);
     PokemonVerificationContext groupPokemon[4];
     std::vector<uint64_t> pokemonSeeds;
     {
@@ -25,11 +26,28 @@ void reversal() {
             groupRng.next();
             Xoroshiro128PlusRNG genRng(genSeed);
             genRng.next();
-            PokemonEntity entity = spawner.createPokemon(genSeed, shinyRolls);
+            PokemonEntity entity = spawner.createPokemon(genSeed);
             groupPokemon[i] = createOracleVerifyStructForCUDA(entity, slotGroup);
             printf("Gen seed %016llx Pokemon seed %016llx\n", entity.m_generatorSeed, entity.m_pokemonSeed);
-            std::cout << entity.toString() << std::endl;
         }
+    }
+
+    std::vector<ObservedSizeInstance> sizes;
+    sizes.emplace_back(species, 15, 15.8);
+    sizes.emplace_back(PokemonData::getSpeciesID("Piloswine"), 42, 135.9);
+    calculateSizeRanges(true, sizes, groupPokemon[0].height, groupPokemon[0].weight);
+    uint32_t numHeights, numWeights;
+    getPossibleSizes(groupPokemon[0].height, groupPokemon[0].weight, numHeights, numWeights);
+    auto pairs = calculateSizePairs(true, sizes);
+    printf("Heights:%u Weights:%u Pairs:%u\n", numHeights, numWeights, pairs.size());
+
+    auto& evoData = PokemonData::getSpeciesData(221);
+    for (auto& pair : pairs) {
+        float dispHeight, dispWeight;
+        getDisplaySize(data, true, (uint8_t)pair.first, (uint8_t)pair.second, dispHeight, dispWeight);
+        printf("%u %u %.1f %.1f\n", pair.first, pair.second, dispHeight, dispWeight);
+        getDisplaySize(evoData, true, (uint8_t)pair.first, (uint8_t)pair.second, dispHeight, dispWeight);
+        printf("%u %u %.1f %.1f\n", pair.first, pair.second, dispHeight, dispWeight);
     }
 
     uint32_t searchIndex = 0;
@@ -37,7 +55,7 @@ void reversal() {
         std::swap(groupPokemon[searchIndex], groupPokemon[0]);
     }
 
-    SeedReversalContext reversalCtx = createReversalCtxForCUDA(shinyRolls, slotGroup);
+    SeedReversalContext reversalCtx = createReversalCtxForCUDA(shinyRolls[species], slotGroup);
     reversalCtx.numPokemon = 4;
     for (int i = 0; i < 4; i++) {
         reversalCtx.pokemonVerifCtx[i] = groupPokemon[i];
@@ -106,18 +124,6 @@ void seedFind(const char* filePath) {
     delete[] outputBuffer;
 }
 
-void spawner() {
-    PokemonEntity entity;
-    uint64_t seed = 0xdad94c64441525ba;
-    PokemonSlotGroup group = PokemonData::getSlotGroupTable(0xC44A139615D5807E);
-    OutbreakSpawner spawner(group);
-    std::vector<PokemonEntity> pokemon;
-    seed = spawner.spawnPokemon(seed, 4, 17, pokemon);
-    for (auto mon : pokemon) {
-        std::cout << mon.toString() << std::endl;
-    }
-}
-
 int main(int argc, char** argv){
     PokemonData::loadSpeciesNamesFromFile("resources/pokemonSpecies.txt");
     PokemonData::loadSpeciesDataFromFile("resources/pokemonData.txt");
@@ -125,11 +131,13 @@ int main(int argc, char** argv){
     PokemonData::loadAbilityNamesFromFile("resources/pokemonAbilities.txt");
     PokemonData::loadTablesFromFile("resources/plaMMOTables.txt");
     
-    // spawner();
     // seedFind(argv[1]);
-    // reversal();
-    QApplication app(argc, argv);
-    MainWindow window;
-    window.show();
-    return app.exec();
+    reversal();
+    // QApplication app(argc, argv);
+    // MainWindow window;
+    // if (argc > 1) {
+    //     window.populateInputJSON(argv[1]);
+    // }
+    // window.show();
+    // return app.exec();
 }

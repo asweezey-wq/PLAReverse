@@ -218,13 +218,17 @@ QGroupBox* PokemonInputTab::createPokemonGroup(int index)
 
 void PokemonInputTab::populateDropdowns(PokemonInput* input)
 {
+    input->verifValid = false;
+    input->verifCtx = PokemonVerificationContext();
+
     input->species->clear();
     input->species->addItems(m_speciesList);
     input->species->setEnabled(m_speciesList.size() > 1);
 
+    input->level->setValue(0);
     input->level->clear();
     for (int i = 0; i < 6; i++) {
-        input->els[i]->clear();
+        input->els[i]->setValue(0);
     }
 
     input->nature->clear();
@@ -239,10 +243,21 @@ void PokemonInputTab::populateDropdowns(PokemonInput* input)
     input->ability->setEnabled(m_abilityList.size() > 1);
 
     input->sizeInputs.clear();
-    input->sizeButton->setEnabled(m_speciesList.size() > 1);
+    input->sizeButton->setEnabled(true);
 
     input->statsInputs.clear();
-    input->statsButton->setEnabled(m_speciesList.size() > 1);
+    input->statsButton->setEnabled(true);
+    for (int i = 0; i < 2; i++) {
+        input->computedHeight[i]->clear();
+        input->computedWeight[i]->clear();
+    }
+    input->verifCtx.height[0] = 0;
+    input->verifCtx.weight[0] = 0;
+    input->verifCtx.height[1] = 255;
+    input->verifCtx.weight[1] = 255;
+
+    input->numSeeds->clear();
+    input->generatorCost->clear();
 }
 
 void PokemonInputTab::selectNewOutbreakSpecies(int index) {
@@ -673,5 +688,62 @@ void PokemonInput::calculateSeeds() {
         generatorCost->setText("");
 
         verifValid = false;
+    }
+}
+
+void PokemonInputTab::populateFromJSON(std::string filePath) {
+    std::vector<PokemonVerificationContext> pokemon;
+    uint64_t tableID;
+    int shinyRolls = 0;
+    parseJSONMMOEncounter(filePath, pokemon, shinyRolls, tableID);
+
+    for (int i = 0; i < m_indexToOutbreakTable.size(); i++) {
+        if (m_indexToOutbreakTable[i] == tableID) {
+            m_outbreakSpeciesComboBox->setCurrentIndex(i);
+        }
+    }
+
+    for (int i = 0; i < 4; i++) {
+        PokemonInput* input = m_pokemonInputs[i];
+        PokemonVerificationContext& ctx = pokemon[i];
+        input->species->setCurrentText(QString("%1").arg(PokemonData::getSpeciesName(ctx.speciesId)));
+        input->level->setValue(ctx.level);
+        for (int j = 0; j < 6; j++) {
+            input->els[j]->setValue(0);
+        }
+        input->nature->setCurrentIndex(ctx.nature);
+        input->gender->setCurrentIndex(ctx.genderData[1]);
+        input->ability->setCurrentIndex(ctx.ability[0] == ctx.ability[1] ? ctx.ability[0] + 1 : 0);
+
+        input->computedHeight[0]->setText(QString("%1").arg(ctx.height[0]));
+        input->computedHeight[1]->setText(QString("%1").arg(ctx.height[1]));
+        input->computedWeight[0]->setText(QString("%1").arg(ctx.weight[0]));
+        input->computedWeight[1]->setText(QString("%1").arg(ctx.weight[1]));
+
+        for (int j = 0; j < 6; j++) {
+            input->computedIVs[j][0]->setText(QString("%1").arg(ctx.ivs[j][0]));
+            input->computedIVs[j][1]->setText(QString("%1").arg(ctx.ivs[j][1]));
+        }
+        input->verifCtx = ctx;
+        input->verifValid = true;
+
+        uint64_t seeds = getExpectedSeeds(ctx);
+        char specifier;
+        double seedsDouble;
+        formatSeeds(seeds, specifier, seedsDouble);
+        input->numSeeds->setText(QString("%1%2").arg(seedsDouble, 0, 'f', 1).arg(specifier));
+
+        auto& slotGroup = PokemonData::getSlotGroupTable(tableID);
+        input->slotGroup = &slotGroup;
+        const PokemonSlot* speciesSlot = nullptr;
+        for (int i = 0; i < slotGroup.numSlots(); i++) {
+            auto& slot = slotGroup.getSlotFromIndex(i);
+            if (slot.m_species == ctx.speciesId) {
+                speciesSlot = &slot;
+                break;
+            }
+        }
+        double genCost = getTheoreticalGeneratorSeeds(ctx, slotGroup.getSlotRateSum()) / 1000.0;
+        input->generatorCost->setText(QString("%1").arg(genCost));
     }
 }

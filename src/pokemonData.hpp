@@ -46,6 +46,7 @@ public:
 
     uint64_t m_pokemonSeed{0};
     uint64_t m_generatorSeed{0};
+    uint32_t m_shinyRolls{0};
 
     std::string toString();
 };

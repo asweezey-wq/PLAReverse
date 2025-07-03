@@ -15,8 +15,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Create and add tabs
     PokemonInputTab* inputTab = new PokemonInputTab(this);
+    m_inputTab = inputTab;
     ReverseRNGTab* rngTab = new ReverseRNGTab(inputTab, this);
-    PermutationsTab* permTab = new PermutationsTab(this);
+    PermutationsTab* permTab = new PermutationsTab(inputTab, this);
 
     m_tabs.push_back(inputTab);
     m_tabs.push_back(rngTab);
@@ -29,6 +30,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     central->setLayout(vbox);
     setCentralWidget(central);
+}
+
+void MainWindow::populateInputJSON(std::string filePath) {
+    m_inputTab->populateFromJSON(filePath);
 }
 
 void MainWindow::tabChanged(int index) {

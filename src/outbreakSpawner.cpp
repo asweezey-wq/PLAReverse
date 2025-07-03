@@ -1,11 +1,11 @@
 #include "outbreakSpawner.hpp"
 #include "xoroshiro.hpp"
 
-OutbreakSpawner::OutbreakSpawner(uint64_t table) : m_tableId(table), m_slotGroup(PokemonData::getSlotGroupTable(table)) {
+OutbreakSpawner::OutbreakSpawner(uint64_t table, ShinyRollData rollData) : m_tableId(table), m_slotGroup(PokemonData::getSlotGroupTable(table)), m_shinyRollData(rollData) {
 
 }
 
-PokemonEntity OutbreakSpawner::createPokemon(uint64_t seed, int numShinyRolls) {
+PokemonEntity OutbreakSpawner::createPokemon(uint64_t seed) {
     Xoroshiro128PlusRNG slotRng(seed);
     float slotRoll = slotRng.nextFloat((float)m_slotGroup.getSlotRateSum());
     const PokemonSlot& slot = m_slotGroup.getSlot(slotRoll);
@@ -13,6 +13,7 @@ PokemonEntity OutbreakSpawner::createPokemon(uint64_t seed, int numShinyRolls) {
     PokemonEntity entity;
     entity.m_generatorSeed = seed;
     entity.m_isAlpha = slot.m_isAlpha;
+    int numShinyRolls = m_shinyRollData.contains(slot.m_species) ? m_shinyRollData[slot.m_species] : 1;
     generatePokemon(pokemonGenSeed, numShinyRolls, slot.m_species, (int)slot.m_numPerfectIVs, entity);
     uint8_t levelMin = slot.m_levelRange.first;
     uint8_t levelMax = slot.m_levelRange.second;
@@ -22,12 +23,12 @@ PokemonEntity OutbreakSpawner::createPokemon(uint64_t seed, int numShinyRolls) {
     return entity;
 }
 
-uint64_t OutbreakSpawner::spawnPokemon(uint64_t seed, int count, int numShinyRolls, std::vector<PokemonEntity>& outputEntities) {
+uint64_t OutbreakSpawner::spawnPokemon(uint64_t seed, int count, std::vector<PokemonEntity>& outputEntities) {
     Xoroshiro128PlusRNG rng(seed);
     for (int i = 0; i < count; i++) {
         uint64_t slotSeed = rng.next();
         uint64_t alphaSeed = rng.next();
-        outputEntities.push_back(createPokemon(slotSeed, numShinyRolls));
+        outputEntities.push_back(createPokemon(slotSeed));
     }
     return rng.next();
 }
@@ -43,6 +44,7 @@ void generatePokemon(uint64_t seed, int shinyRolls, uint32_t species, int numPer
     Xoroshiro128PlusRNG rng(seed);
     entity.m_pokemonSeed = seed;
     entity.m_encrConst = rng.nextUint32();
+    entity.m_shinyRolls = shinyRolls;
     uint32_t fakeTID = rng.nextUint32();
     for (int i = 0; i < shinyRolls; i++) {
         entity.m_pid = rng.nextUint32();
@@ -50,6 +52,7 @@ void generatePokemon(uint64_t seed, int shinyRolls, uint32_t species, int numPer
         bool isShiny = shinyValue < 16;
         if (isShiny) {
             entity.m_isShiny = true;
+            entity.m_shinyRolls = i + 1;
             break;
         }
     }

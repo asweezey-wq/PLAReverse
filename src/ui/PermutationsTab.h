@@ -2,27 +2,48 @@
 #define PERMUTATIONSTAB_H
 
 #include "PokemonTab.hpp"
-#include <QWidget>
-#include <QStandardItemModel>
+#include "permutations.hpp"
+#include <QComboBox>
+#include <QGroupBox>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QTableWidget>
+#include <QCheckBox>
+#include <vector>
 
-namespace Ui {
-class PermutationsTab;
-}
+struct ShinyInfo {
+    uint32_t speciesId;
+    QGroupBox* groupBox;
+    QCheckBox *dex10, *dexPerfect, *shinyCharm;
+};
 
+class PokemonInputTab;
 class PermutationsTab : public PokemonTab
 {
     Q_OBJECT
-
 public:
-    explicit PermutationsTab(QWidget *parent = nullptr);
-    ~PermutationsTab();
-
-public slots:
-    void loadPermutationsFromSeed(quint64 seed);
-
+    explicit PermutationsTab(PokemonInputTab* inputTab, QWidget *parent = nullptr);
+    void updateSecondWaveTables();
+    void beginPermutations();
+    uint64_t getPrimaryOutbreakTable() const;
+    uint64_t getSecondaryOutbreakTable() const;
+protected:
+    void onTabShown() override;
 private:
-    Ui::PermutationsTab *ui;
-    QStandardItemModel *permutationModel;
+    PokemonInputTab* m_inputTab;
+    QLineEdit* m_seed;
+    QComboBox* m_firstWave;
+    QSpinBox* m_numFirstWave;
+    QComboBox* m_secondWave;
+    QSpinBox* m_numSecondWave;
+    QStringList m_secondWaveOptions;
+    std::vector<uint64_t> m_secondWaveOutbreakTables;
+
+    QVBoxLayout* m_shinyRollsVBox;
+    std::vector<ShinyInfo> m_shinyInfo;
+
+    QTableWidget* m_tableWidget;
+    void addResultToTable(PermutationResult result);
 };
 
 #endif // PERMUTATIONSTAB_H

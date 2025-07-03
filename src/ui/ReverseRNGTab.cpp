@@ -53,9 +53,8 @@ ReverseRNGTab::ReverseRNGTab(PokemonInputTab* inputs, QWidget *parent)
     QProgressBar* progressBar = new QProgressBar(this);
     vbox->addWidget(progressBar);
 
-    QTextEdit* textEdit = new QTextEdit(this);
-    textEdit->setReadOnly(true);
-    vbox->addWidget(textEdit);
+    m_seedList = new QListWidget(this);
+    vbox->addWidget(m_seedList);
 
     setLayout(vbox);
 }
@@ -80,6 +79,7 @@ void ReverseRNGTab::onTabShown() {
 }
 
 void ReverseRNGTab::beginSeedReversal(int index) {
+    m_seedList->clear();
     int numShinyRolls = 13;
     if (m_pokemonUiInfo[index].dex10->isChecked()) {
         numShinyRolls += 1;
@@ -118,7 +118,10 @@ void ReverseRNGTab::beginSeedReversal(int index) {
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     printf("Seed search took %.02fs\n", (double)duration.count() / 1000000);
-    delete[] outputBuffer;
+    
+    for (int i = 0; i < results; i++) {
+        m_seedList->addItem(QString("%1").arg(outputBuffer[i]));
+    }
 }
 
 void ReverseRNGTab::updateShinyCharm(bool value) {

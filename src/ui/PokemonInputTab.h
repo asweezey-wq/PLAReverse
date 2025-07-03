@@ -50,10 +50,12 @@ public:
     explicit PokemonInputTab(QWidget *parent = nullptr);
     const std::vector<PokemonInput*>& getPokemonInputs() const { return m_pokemonInputs; }
     uint64_t getSelectedOutbreakTable() const { return m_selectedOutbreakTable; }
-private:
-    std::vector<PokemonInput*> m_pokemonInputs;
+    int getSelectedSpeciesIndex() const { return m_outbreakSpeciesComboBox->currentIndex(); }
+    void populateFromJSON(std::string filePath);
     QStringList m_outbreakSpeciesList, m_natureList, m_ratingsList;
     std::vector<uint64_t> m_indexToOutbreakTable;
+private:
+    std::vector<PokemonInput*> m_pokemonInputs;
 
     QComboBox* m_outbreakSpeciesComboBox;
     uint64_t m_selectedOutbreakTable;

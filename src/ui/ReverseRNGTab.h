@@ -5,6 +5,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QCheckBox>
+#include <QListWidget>
 
 struct PokemonInfo {
     QLineEdit* info;
@@ -26,6 +27,7 @@ public:
 private:
     PokemonInputTab* m_inputTab;
     std::vector<PokemonInfo> m_pokemonUiInfo;
+    QListWidget* m_seedList;
 
     void updateShinyCharm(bool value);
     void updateDexPerfect(int index, bool value);
