@@ -4,6 +4,7 @@
 #include "json.hpp"
 #include <iostream>
 #include <algorithm>
+#include <unordered_set>
 #include <bit>
 
 using json = nlohmann::json;
@@ -157,6 +158,15 @@ PokemonVerificationContext createOracleVerifyStructForCUDA(const PokemonEntity& 
     return verify;
 }
 
+void createSizePairsForCUDA(const std::vector<std::pair<uint32_t, uint32_t>>& sizePairs, SizePairs& cudaSizePairs) {
+    memset(cudaSizePairs.sizeMapping, 0, sizeof(cudaSizePairs.sizeMapping));
+    for (auto& pair : sizePairs) {
+        cudaSizePairs.sizeMapping[pair.first][pair.second >> 6] |= (1ull << (pair.second & 63));
+    }
+}
+
+std::unordered_map<uint32_t, double> g_sizeSumDistribution;
+
 void getPossibleSizes(const uint32_t heightRange[2], const uint32_t weightRange[2], uint32_t& numHeights, uint32_t& numWeights) {
     numHeights = 0;
     numWeights = 0;
@@ -171,6 +181,23 @@ void getPossibleSizes(const uint32_t heightRange[2], const uint32_t weightRange[
             } 
         }
     }
+}
+
+double getSizePairProbability(const std::vector<std::pair<uint32_t, uint32_t>>& sizePairs) {
+    if (g_sizeSumDistribution.empty()) {
+        constexpr double incr = 1.0 / (128.0 * 129.0);
+        for (int i = 0; i < 129; i++) {
+            for (int j = 0; j < 128; j++) {
+                g_sizeSumDistribution[i+j] += incr;
+            }
+        }
+    }
+    double sumProb = 0;
+    for (auto& pair : sizePairs) {
+        double combinedProb = g_sizeSumDistribution[pair.first] * g_sizeSumDistribution[pair.second];
+        sumProb += combinedProb;
+    }
+    return sumProb;
 }
 
 uint64_t getExpectedSeeds(const PokemonVerificationContext& verifyConst) {
@@ -194,6 +221,24 @@ uint64_t getExpectedSeeds(const PokemonVerificationContext& verifyConst) {
     return (uint64_t)numSeeds;
 }
 
+uint64_t getExpectedSeedsWithSizePairs(const PokemonVerificationContext& verifyConst, const std::vector<std::pair<uint32_t, uint32_t>>& sizePairs) {
+    auto& data = PokemonData::getSpeciesData(verifyConst.speciesId);
+    bool genderless = verifyConst.genderData[1] == GENDERLESS || data.genderRatio >= 254 || data.genderRatio == 0;
+    float genderOdds = 1.0f;
+    if (!genderless) {
+        genderOdds = (data.genderRatio - 1) / 253.0f;
+        if (verifyConst.genderData[1] == MALE) {
+            genderOdds = 1.0f - genderOdds;
+        }
+    }
+    double sizeOdds = getSizePairProbability(sizePairs);
+    uint64_t numIVCombos = getNumIVPermutations(verifyConst.ivs);
+    double abilityModifier = verifyConst.ability[0] == verifyConst.ability[1] ? 2 : 1;
+    double seedOdds = (abilityModifier * 25 * (1.0f / genderOdds) * (1.0f / sizeOdds));
+    double numSeeds = (double)(numIVCombos << 34) / seedOdds;
+    return (uint64_t)numSeeds;
+}
+
 uint64_t getTheoreticalGeneratorSeeds(const PokemonVerificationContext& verifyConst, uint32_t slotRateSum) {
     auto& data = PokemonData::getSpeciesData(verifyConst.speciesId);
     bool genderless = verifyConst.genderData[1] == GENDERLESS || data.genderRatio >= 254 || data.genderRatio == 0;
@@ -208,6 +253,25 @@ uint64_t getTheoreticalGeneratorSeeds(const PokemonVerificationContext& verifyCo
     getPossibleSizes(verifyConst.height, verifyConst.weight, numHeights, numWeights);
     double allPossibleSizes = (129 * 128);
     double sizeOdds = (numHeights / allPossibleSizes) * (numWeights / allPossibleSizes);
+    double abilityModifier = 2;
+    double levelOdds = verifyConst.levelRange[1] ? verifyConst.levelRange[1] : 1.0; // 3 possible levels for an MMO
+    double slotOdds = (verifyConst.slotThresholds[1] - verifyConst.slotThresholds[0]) / slotRateSum;
+    double seedOdds = (abilityModifier * 25 * (1.0 / genderOdds) * (1.0 / sizeOdds) * levelOdds * (1.0 / slotOdds));
+    double numSeeds = (double)(1ull << 34) / seedOdds;
+    return (uint64_t)numSeeds;
+}
+
+uint64_t getTheoreticalGeneratorSeedsWithSizePairs(const PokemonVerificationContext& verifyConst, const std::vector<std::pair<uint32_t, uint32_t>>& sizePairs, uint32_t slotRateSum) {
+    auto& data = PokemonData::getSpeciesData(verifyConst.speciesId);
+    bool genderless = verifyConst.genderData[1] == GENDERLESS || data.genderRatio >= 254 || data.genderRatio == 0;
+    float genderOdds = 1.0f;
+    if (!genderless) {
+        genderOdds = (data.genderRatio - 1) / 253.0f;
+        if (verifyConst.genderData[1] == MALE) {
+            genderOdds = 1.0f - genderOdds;
+        }
+    }
+    double sizeOdds = getSizePairProbability(sizePairs);
     double abilityModifier = 2;
     double levelOdds = verifyConst.levelRange[1] ? verifyConst.levelRange[1] : 1.0; // 3 possible levels for an MMO
     double slotOdds = (verifyConst.slotThresholds[1] - verifyConst.slotThresholds[0]) / slotRateSum;
@@ -274,7 +338,7 @@ json jsonExpectArray(json& jsonObj, const std::string name) {
     return jsonObj[name];
 }
 
-void parseJSONMMOEncounter(std::string filePath, std::vector<PokemonVerificationContext>& outputPokemon, int& numShinyRolls, uint64_t& tableID) {
+void parseJSONMMOEncounter(std::string filePath, std::vector<PokemonVerificationContext>& outputPokemon, std::vector<std::vector<ObservedSizeInstance>>& sizes, int& numShinyRolls, uint64_t& tableID) {
     std::ifstream ifs(filePath);
     if (!ifs.is_open()) {
         fprintf(stderr, "Could not open encounter file %s\n", filePath.c_str());
@@ -456,6 +520,7 @@ void parseJSONMMOEncounter(std::string filePath, std::vector<PokemonVerification
             };
             observedSizeInstances.emplace_back(size);
         }
+        sizes.emplace_back(observedSizeInstances);
         if (!jsonFailed) {
             calculateSizeRanges(imperial, observedSizeInstances, verify.height, verify.weight);
         }

@@ -10,14 +10,12 @@ qt_standard_project_setup()
 
 set(MAIN_SRC_DIR "src")
 set(UI_SRC_DIR "src/ui")
-FILE(GLOB UIFILES ${UI_SRC_DIR}/*.ui)
 FILE(GLOB UISRCFILES ${UI_SRC_DIR}/*.cpp)
 FILE(GLOB SRCFILES ${MAIN_SRC_DIR}/*.cpp)
 include_directories(${MAIN_SRC_DIR})
 include_directories(${UI_SRC_DIR})
 
 qt_add_executable(PLAReverse ${SRCFILES} ${UISRCFILES})
-qt_add_ui(PLAReverse SOURCES ${UIFILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES native)
 include_directories(pokemonCuda)

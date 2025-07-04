@@ -23,10 +23,10 @@ PermutationsTab::PermutationsTab(PokemonInputTab* inputTab, QWidget *parent)
     m_firstWave->addItems(inputTab->m_outbreakSpeciesList);
     connect(m_firstWave, &QComboBox::currentIndexChanged, this, &PermutationsTab::updateSecondWaveTables);
     m_numFirstWave = new QSpinBox();
-    m_numFirstWave->setRange(8, 10);
+    m_numFirstWave->setRange(4, 100);
     m_secondWave = new QComboBox();
     m_numSecondWave = new QSpinBox();
-    m_numSecondWave->setRange(6, 8);
+    m_numSecondWave->setRange(4, 8);
 
     outbreakVbox->addWidget(m_firstWave);
     outbreakVbox->addWidget(m_numFirstWave);
@@ -73,6 +73,9 @@ void PermutationsTab::updateSecondWaveTables() {
     m_secondWave->clear();
     m_secondWaveOptions.clear();
     m_secondWaveOutbreakTables.clear();
+
+    m_secondWaveOptions.append(QString());
+    m_secondWaveOutbreakTables.push_back(0);
 
     for (auto& pair : PokemonData::getOutbreakTables()) {
         auto& firstSlot = pair.second.getSlotFromIndex(0);
@@ -151,9 +154,9 @@ void PermutationsTab::beginPermutations() {
             addResultToTable(result);
         }
         m_tableWidget->resizeColumnsToContents();
-    } catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument&) {
         return;
-    } catch (const std::out_of_range& e) {
+    } catch (const std::out_of_range&) {
         return;
     }
 }
@@ -180,11 +183,11 @@ void PermutationsTab::addResultToTable(PermutationResult result) {
         }
         first = false;
     }
-    m_tableWidget->setItem(row, 0, new QTableWidgetItem(QString("%1").arg(ss.str())));
+    m_tableWidget->setItem(row, 0, new QTableWidgetItem(QString("%1 ").arg(ss.str())));
     m_tableWidget->setItem(row, 1, new QTableWidgetItem(QString("%1").arg(PokemonData::getSpeciesName(result.pokemon.m_species))));
-    m_tableWidget->setItem(row, 2, new QTableWidgetItem(result.pokemon.m_isShiny ? "YES" : "NO"));
-    m_tableWidget->setItem(row, 3, new QTableWidgetItem(result.pokemon.m_isAlpha ? "YES" : "NO"));
+    m_tableWidget->setItem(row, 2, new QTableWidgetItem(result.pokemon.m_isShiny ? "YES" : ""));
+    m_tableWidget->setItem(row, 3, new QTableWidgetItem(result.pokemon.m_isAlpha ? "YES" : ""));
     m_tableWidget->setItem(row, 4, new QTableWidgetItem(QString("%1").arg(result.pokemon.m_shinyRolls)));
-    m_tableWidget->setItem(row, 5, new QTableWidgetItem(QString("%1/%2/%3/%4/%5/%6").arg(result.pokemon.m_ivs[0]).arg(result.pokemon.m_ivs[1]).arg(result.pokemon.m_ivs[2]).arg(result.pokemon.m_ivs[3]).arg(result.pokemon.m_ivs[4]).arg(result.pokemon.m_ivs[5])));
+    m_tableWidget->setItem(row, 5, new QTableWidgetItem(QString("%1/%2/%3/%4/%5/%6").arg(result.pokemon.m_ivs[0], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[1], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[2], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[3], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[4], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[5], 2, 10, QLatin1Char('0'))));
     m_tableWidget->setItem(row, 6, new QTableWidgetItem(QString("%1").arg(NATURE_NAMES[result.pokemon.m_nature])));
 }

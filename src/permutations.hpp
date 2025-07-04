@@ -26,9 +26,10 @@ public:
     
     void doUserAction(PermutationUserAction action);
     std::vector<PokemonEntity> respawn();
+    void advanceWave() { m_isFirstWave = false; }
 
-    bool hasFirstWaveEnded() const { return m_isFirstWave && m_pokemonSpawned == 0 && m_primaryCount == 0; }
-    bool hasEnded() const { return !m_isFirstWave && m_pokemonSpawned == 0 && m_secondaryCount == 0; }
+    bool hasFirstWaveEnded() const { return m_isFirstWave && m_primaryCount == 0; }
+    bool hasEnded() const { return !m_isFirstWave && m_secondaryCount == 0; }
     
     uint64_t m_groupSeed;
     int m_primaryCount = 0;
@@ -36,7 +37,8 @@ public:
     OutbreakSpawner *m_primarySpawner, *m_secondarySpawner;
 
     bool m_isFirstWave = true;
-    int m_pokemonSpawned = 0;
+    int m_pokemonAlive = 0;
+    int m_ghosts = 0;
 };
 
 class PermutationsManager {
@@ -50,4 +52,6 @@ private:
     OutbreakState m_startingState;
     OutbreakSpawner *m_primarySpawner = nullptr;
     OutbreakSpawner *m_secondarySpawner = nullptr;
+
+    void findPermutationsRecursive(OutbreakState state, const std::vector<PermutationUserAction>& actionChain, std::vector<PermutationResult>& results);
 };

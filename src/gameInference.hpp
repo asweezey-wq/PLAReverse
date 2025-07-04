@@ -58,6 +58,10 @@ enum JudgeIVRating {
     BEST
 };
 
+const std::string RATING_NAMES[] = {
+    "NoGood", "Decent", "PrettyGood", "VeryGood", "Fantastic", "Best"
+};
+
 constexpr uint8_t JUDGE_IV_RANGES[6][2] = {
     {0, 0},
     {1, 15},

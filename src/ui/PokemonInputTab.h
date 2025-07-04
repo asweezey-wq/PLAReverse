@@ -52,6 +52,7 @@ public:
     uint64_t getSelectedOutbreakTable() const { return m_selectedOutbreakTable; }
     int getSelectedSpeciesIndex() const { return m_outbreakSpeciesComboBox->currentIndex(); }
     void populateFromJSON(std::string filePath);
+    void saveToJSON(std::string filePath);
     QStringList m_outbreakSpeciesList, m_natureList, m_ratingsList;
     std::vector<uint64_t> m_indexToOutbreakTable;
 private:

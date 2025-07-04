@@ -23,12 +23,23 @@ PokemonEntity OutbreakSpawner::createPokemon(uint64_t seed) {
     return entity;
 }
 
-uint64_t OutbreakSpawner::spawnPokemon(uint64_t seed, int count, std::vector<PokemonEntity>& outputEntities) {
+uint64_t OutbreakSpawner::spawnPokemon(uint64_t seed, int count, std::vector<PokemonEntity>& outputEntities, int ghosts) {
     Xoroshiro128PlusRNG rng(seed);
     for (int i = 0; i < count; i++) {
         uint64_t slotSeed = rng.next();
         uint64_t alphaSeed = rng.next();
+        if (i < ghosts)
+            continue;
         outputEntities.push_back(createPokemon(slotSeed));
+    }
+    return rng.next();
+}
+
+uint64_t OutbreakSpawner::advanceSeed(uint64_t seed, int count) {
+    Xoroshiro128PlusRNG rng(seed);
+    for (int i = 0; i < count; i++) {
+        uint64_t slotSeed = rng.next();
+        uint64_t alphaSeed = rng.next();
     }
     return rng.next();
 }

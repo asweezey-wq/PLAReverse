@@ -11,7 +11,8 @@ public:
     OutbreakSpawner(const PokemonSlotGroup& slotGroup, ShinyRollData rollData) : m_slotGroup(slotGroup), m_shinyRollData(rollData) {}
 
     PokemonEntity createPokemon(uint64_t seed);
-    uint64_t spawnPokemon(uint64_t seed, int count, std::vector<PokemonEntity>& outputEntities);
+    uint64_t spawnPokemon(uint64_t seed, int count, std::vector<PokemonEntity>& outputEntities, int ghosts = 0);
+    static uint64_t advanceSeed(uint64_t seed, int count);
 private:
     uint64_t m_tableId{0};
     const PokemonSlotGroup& m_slotGroup;

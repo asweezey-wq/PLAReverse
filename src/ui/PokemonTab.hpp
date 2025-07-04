@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pokemonCuda.h"
+#include "pokemonCuda.hpp"
 #include <QWidget>
 #include <QComboBox>
 #include <QSpinBox>
@@ -61,7 +61,9 @@ public:
     QLineEdit* generatorCost;
 
     bool verifValid = false;
+    bool canGen = false;
     PokemonVerificationContext verifCtx;
+    std::vector<std::pair<uint32_t, uint32_t>> sizePairs;
 
     void calculateIVs();
     void calculateSizes();

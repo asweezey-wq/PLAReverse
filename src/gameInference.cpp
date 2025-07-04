@@ -171,8 +171,8 @@ void calculateSizeRanges(bool imperial, const std::vector<ObservedSizeInstance> 
 
 std::vector<std::pair<uint32_t, uint32_t>> calculateSizePairs(bool imperial, const std::vector<ObservedSizeInstance> sizes) {
     std::vector<std::pair<uint32_t, uint32_t>> pairs;
-    const float heightEpsilon = imperial ? 0.05f : 0.05f;
-    const float weightEpsilon = imperial ? 0.05f : 0.05f;
+    const float heightEpsilon = imperial ? 0.06f : 0.06f;
+    const float weightEpsilon = imperial ? 0.06f : 0.06f;
     for (int i = 0; i < 256; i++) {
         for (int j = 0; j < 256; j++) {
             bool valid = true;

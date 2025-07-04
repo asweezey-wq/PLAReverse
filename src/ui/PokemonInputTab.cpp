@@ -6,9 +6,11 @@
 #include <QFormLayout>
 #include <QLabel>
 #include <QMessageBox>
+#include <QScrollArea>
 #include <unordered_set>
 #include <queue>
 #include <bit>
+#include <sstream>
 
 PokemonInputTab::PokemonInputTab(QWidget *parent)
     : PokemonTab(parent)
@@ -286,10 +288,14 @@ void PokemonInputTab::selectNewOutbreakSpecies(int index) {
         }
 
         m_abilityList.clear();
-        m_abilityList.append(QString());
-        for (int i = 0; i < 2; i++) {
-            if (data.abilities[i]) {
-                m_abilityList.append(QString(PokemonData::getAbilityName(data.abilities[i]).c_str()));
+        if (data.abilities[0] == data.abilities[1]) {
+            m_abilityList.append(QString(PokemonData::getAbilityName(data.abilities[0]).c_str()));
+        } else {
+            m_abilityList.append(QString());
+            for (int i = 0; i < 2; i++) {
+                if (data.abilities[i]) {
+                    m_abilityList.append(QString(PokemonData::getAbilityName(data.abilities[i]).c_str()));
+                }
             }
         }
 
@@ -409,8 +415,8 @@ void PokemonInput::calculateSizes() {
     computedWeight[0]->setStyleSheet(styleSheet);
     computedWeight[1]->setText(QString("%1").arg(verifCtx.weight[1]));
     computedWeight[1]->setStyleSheet(styleSheet);
-    auto sizePairs = calculateSizePairs(true, sizes);
-    possibleSizes->setText(QString("%1 / %2").arg((1 + verifCtx.height[1] - verifCtx.height[0]) * (1 + verifCtx.weight[1] - verifCtx.weight[0])).arg(sizePairs.size()));
+    sizePairs = calculateSizePairs(true, sizes);
+    possibleSizes->setText(QString("%1").arg(sizePairs.size()));
 
     calculateSeeds();
 }
@@ -423,6 +429,7 @@ void PokemonSizeCalculator::removeSizeInput(int index) {
     auto& sizeInput = m_pokemonInput->sizeInputs[index];
     m_pokemonInput->sizeInputs.erase(m_pokemonInput->sizeInputs.begin() + index);
     m_addMeasurementButton->setEnabled((qsizetype)m_pokemonInput->sizeInputs.size() < m_species.size());
+    adjustSize();
 }
 
 PokemonStatCalculator::PokemonStatCalculator(PokemonInput* input, QWidget *parent) {
@@ -444,8 +451,14 @@ PokemonStatCalculator::PokemonStatCalculator(PokemonInput* input, QWidget *paren
     setWindowTitle("Size Calculator");
     m_addStatsButton = new QPushButton("Add Stats");
 
+    QScrollArea* scrollArea = new QScrollArea(this);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setMinimumHeight(500);
+    QWidget* scrollWidget = new QWidget();
     QVBoxLayout* layout = new QVBoxLayout(this);
     m_statsLayout = new QVBoxLayout();
+    scrollWidget->setLayout(m_statsLayout);
+    scrollArea->setWidget(scrollWidget);
 
     for (int i = 0; i < m_pokemonInput->statsInputs.size(); i++) {
         m_statsLayout->addWidget(widgetFromStatsInput(i));
@@ -473,7 +486,7 @@ PokemonStatCalculator::PokemonStatCalculator(PokemonInput* input, QWidget *paren
     layout->addWidget(new QLabel("Ratings"));
     layout->addLayout(ratingsBox);
 
-    layout->addLayout(m_statsLayout);
+    layout->addWidget(scrollArea);
     connect(m_addStatsButton, &QPushButton::clicked, this, &PokemonStatCalculator::addNewStats);
     layout->addWidget(m_addStatsButton);
 
@@ -548,6 +561,7 @@ void PokemonStatCalculator::removeStatsInput(int index) {
     m_stats.erase(m_stats.begin() + index);
     m_pokemonInput->statsInputs.erase(m_pokemonInput->statsInputs.begin() + index);
     m_addStatsButton->setEnabled((qsizetype)m_pokemonInput->statsInputs.size() < m_species.size());
+    adjustSize();
 }
 
 void PokemonStatCalculator::updateIVRanges() {
@@ -652,7 +666,6 @@ void PokemonInput::calculateSeeds() {
     if (valid && speciesSlot) {
         uint32_t speciesId = PokemonData::getSpeciesID(species->currentText().toStdString());
         auto& data = PokemonData::getSpeciesData(speciesId);
-        float slotRateBase = 0;
         uint8_t levelRange = 1 + speciesSlot->m_levelRange.second - speciesSlot->m_levelRange.first;
         uint8_t levelBitMask = levelRange == 1 ? 1 : (1<<std::bit_width((uint8_t)(levelRange-1))) - 1;
         verifCtx.speciesId = speciesId;
@@ -673,29 +686,31 @@ void PokemonInput::calculateSeeds() {
             verifCtx.ability[0] = 0;
             verifCtx.ability[1] = 1;
         }
-        uint64_t seeds = getExpectedSeeds(verifCtx);
+        uint64_t seeds = getExpectedSeedsWithSizePairs(verifCtx, sizePairs);
         char specifier;
         double seedsDouble;
         formatSeeds(seeds, specifier, seedsDouble);
         numSeeds->setText(QString("%1%2").arg(seedsDouble, 0, 'f', 1).arg(specifier));
 
-        double genCost = getTheoreticalGeneratorSeeds(verifCtx, slotGroup->getSlotRateSum()) / 1000.0;
+        double genCost = getTheoreticalGeneratorSeedsWithSizePairs(verifCtx, sizePairs, slotGroup->getSlotRateSum()) / 1000.0;
         generatorCost->setText(QString("%1").arg(genCost));
+        canGen = (genCost * getNumIVPermutations(verifCtx.ivs)) < 64;
 
         verifValid = true;
     } else {
         numSeeds->setText("");
         generatorCost->setText("");
-
+        canGen = false;
         verifValid = false;
     }
 }
 
 void PokemonInputTab::populateFromJSON(std::string filePath) {
     std::vector<PokemonVerificationContext> pokemon;
+    std::vector<std::vector<ObservedSizeInstance>> sizes;
     uint64_t tableID;
     int shinyRolls = 0;
-    parseJSONMMOEncounter(filePath, pokemon, shinyRolls, tableID);
+    parseJSONMMOEncounter(filePath, pokemon, sizes, shinyRolls, tableID);
 
     for (int i = 0; i < m_indexToOutbreakTable.size(); i++) {
         if (m_indexToOutbreakTable[i] == tableID) {
@@ -715,6 +730,17 @@ void PokemonInputTab::populateFromJSON(std::string filePath) {
         input->gender->setCurrentIndex(ctx.genderData[1]);
         input->ability->setCurrentIndex(ctx.ability[0] == ctx.ability[1] ? ctx.ability[0] + 1 : 0);
 
+        PokemonSizeCalculator* sizeCalc = new PokemonSizeCalculator(input, this);
+        auto& observedSizes = sizes[i];
+        input->sizeInputs.clear();
+        for (int i = 0; i < observedSizes.size(); i++) {
+            auto& measurement = observedSizes[i];
+            auto& sizeInput = sizeCalc->addNewMeasurement();
+            sizeInput.species->setCurrentText(QString("%1").arg(PokemonData::getSpeciesName(measurement.speciesId)));
+            sizeInput.height[0]->setValue((int)(measurement.height) / 12);
+            sizeInput.height[1]->setValue((int)(measurement.height) % 12);
+            sizeInput.weight->setValue(measurement.weight);
+        }
         input->computedHeight[0]->setText(QString("%1").arg(ctx.height[0]));
         input->computedHeight[1]->setText(QString("%1").arg(ctx.height[1]));
         input->computedWeight[0]->setText(QString("%1").arg(ctx.weight[0]));
@@ -745,5 +771,75 @@ void PokemonInputTab::populateFromJSON(std::string filePath) {
         }
         double genCost = getTheoreticalGeneratorSeeds(ctx, slotGroup.getSlotRateSum()) / 1000.0;
         input->generatorCost->setText(QString("%1").arg(genCost));
+        input->canGen = (genCost * getNumIVPermutations(input->verifCtx.ivs)) < 64;
     }
+}
+
+void PokemonInputTab::saveToJSON(std::string filePath) {
+    json jsonObj;
+    jsonObj["shinyRolls"] = 1;
+    std::stringstream ss;
+    ss << "0x" << std::hex << getSelectedOutbreakTable();
+    jsonObj["tableID"] = ss.str();
+    json pokemonList = json::array();
+    for (int i = 0; i < 4; i++) {
+        PokemonInput* input = m_pokemonInputs[i];
+        auto& data = PokemonData::getSpeciesData(PokemonData::getSpeciesID(input->species->currentText().toStdString()));
+        json pokemonObj;
+        pokemonObj["name"] = input->species->currentText().toStdString();
+        pokemonObj["nature"] = input->nature->currentText().toStdString();
+        if (data.genderRatio < 254 && data.genderRatio > 0) {
+            constexpr std::string genderStrings[2] = {"M", "F"};
+            pokemonObj["gender"] = genderStrings[input->gender->currentIndex()];
+        }
+        pokemonObj["level"] = input->level->value();
+        pokemonObj["effortLevels"] = json::array();
+        for (int i = 0; i < 6; i++) {
+            pokemonObj["effortLevels"].push_back(input->els[i]->value());
+        }
+        if (input->ability->currentIndex()) {
+            pokemonObj["ability"] = input->ability->currentText().toStdString();
+        }
+        if (input->ratings.ratings[0]->currentIndex()) {
+            pokemonObj["ratings"] = json::array();
+            for (int i = 0; i < 6; i++) {
+                int rating = input->ratings.ratings[i]->currentIndex();
+                pokemonObj["ratings"].push_back(RATING_NAMES[rating ? rating - 1 : 0]);
+            }
+        }
+        pokemonObj["sizes"] = json::array();
+        for (int i = 0; i < input->sizeInputs.size(); i++) {
+            SizeInput& sizeInput = input->sizeInputs[i];
+            json sizeJson;
+            sizeJson["name"] = sizeInput.species->currentText().toStdString();
+            sizeJson["height_ft"] = sizeInput.height[0]->value();
+            sizeJson["height_in"] = sizeInput.height[1]->value();
+            sizeJson["weight_lbs"] = sizeInput.weight->value();
+            pokemonObj["sizes"].push_back(sizeJson);
+        }
+
+        if (!input->statsInputs.empty()) {
+            pokemonObj["stats"] = json::array();
+            for (int i = 0; i < input->statsInputs.size(); i++) {
+                StatsInput& statsInput = input->statsInputs[i];
+                json statJson;
+                statJson["name"] = statsInput.species->currentText().toStdString();
+                statJson["level"] = statsInput.level->value();
+                statJson["stats"] = json::array();
+                for (int j = 0; j < 6; j++) {
+                    statJson["stats"].push_back(statsInput.stats[j]->value());
+                }
+                pokemonObj["stats"].push_back(statJson);
+            }
+        }
+
+        pokemonList.push_back(pokemonObj);
+    }
+    jsonObj["pokemon"] = pokemonList;
+
+    // Open a file for writing
+    std::ofstream file(filePath);
+
+    // Write the JSON object to the file
+    file << std::setw(4) << jsonObj << std::endl;
 }

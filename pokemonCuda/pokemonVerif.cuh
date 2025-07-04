@@ -1,6 +1,7 @@
 #pragma once
-#include "pokemonCuda.h"
+#include "pokemonCuda.hpp"
 #include "xoroshiro.cuh"
+#include <iostream>
 
 __device__ __forceinline__ bool verifySeed(uint64_t seed, const PokemonVerificationContext& verifCtx) {
     Xoroshiro rng = {seed, XOROSHIRO_CONSTANT};
@@ -42,7 +43,7 @@ __device__ __forceinline__ bool verifySeed(uint64_t seed, const PokemonVerificat
     return true;
 }
 
-__device__ __forceinline__ bool verifySeedNoIVs(uint64_t seed, const PokemonVerificationContext& verifCtx) {
+__device__ __forceinline__ bool verifySeedNoIVs(uint64_t seed, const PokemonVerificationContext& verifCtx, const SizePairs& sizePairs) {
     Xoroshiro rng = {seed};
     for (int i = 0; i < 8 + g_seedReversalCtx.shinyRolls; i++) {
         xoroshiroNext(&rng);
@@ -66,14 +67,12 @@ __device__ __forceinline__ bool verifySeedNoIVs(uint64_t seed, const PokemonVeri
     }
 
     uint64_t height = xoroshiroRand(&rng, 129, 255) + xoroshiroRand(&rng, 128, 127);
-    if (height < verifCtx.height[0] || height > verifCtx.height[1]) {
-        return false;
-    }
     uint64_t weight = xoroshiroRand(&rng, 129, 255) + xoroshiroRand(&rng, 128, 127);
-    if (weight < verifCtx.weight[0] || weight > verifCtx.weight[1]) {
-        return false;
+    if (seed == 0x766ed5dd282c4ca3) {
+        printf("%llu %llu mapping:%llx\n", height, weight, sizePairs.sizeMapping[height][weight >> 6]);
     }
-    return true;
+    uint64_t sizeValid = (sizePairs.sizeMapping[height][weight >> 6] >> (weight & 63)) & 1;
+    return sizeValid;
 }
 
 __device__ __forceinline__ bool verifyGeneratorSeed(uint64_t seed, const PokemonVerificationContext& verifCtx) {
