@@ -88,7 +88,7 @@ enum SpeciesShinyInfo : uint8_t {
 };
 
 int getShinyRolls(uint8_t info);
-constexpr float getNatureModifier(uint8_t nature, int stat);
+float getNatureModifier(uint8_t nature, int stat);
 int calculateHP(uint8_t base, uint8_t iv, uint8_t ev, uint8_t level);
 int calculateOtherStat(uint8_t base, uint8_t iv, uint8_t ev, uint8_t level, float natureMod);
 

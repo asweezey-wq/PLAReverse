@@ -4,6 +4,7 @@
 #include "PokemonTab.hpp"
 #include <QDialog>
 #include <QGroupBox>
+#include <QLabel>
 
 class PokemonSizeCalculator : public QDialog {
     Q_OBJECT
@@ -41,6 +42,8 @@ private:
     QVBoxLayout* m_statsLayout;
     std::vector<QWidget*> m_stats;
     std::vector<QLineEdit*> m_ivs;
+    std::vector<QLabel*> m_nextLevels;
+    QLabel* m_recommendAction;
 };
 
 class PokemonInputTab : public PokemonTab

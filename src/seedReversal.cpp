@@ -253,7 +253,7 @@ uint64_t getTheoreticalGeneratorSeeds(const PokemonVerificationContext& verifyCo
     getPossibleSizes(verifyConst.height, verifyConst.weight, numHeights, numWeights);
     double allPossibleSizes = (129 * 128);
     double sizeOdds = (numHeights / allPossibleSizes) * (numWeights / allPossibleSizes);
-    double abilityModifier = 2;
+    double abilityModifier = data.abilities[0] == data.abilities[1] ? 1 : 2;
     double levelOdds = verifyConst.levelRange[1] ? verifyConst.levelRange[1] : 1.0; // 3 possible levels for an MMO
     double slotOdds = (verifyConst.slotThresholds[1] - verifyConst.slotThresholds[0]) / slotRateSum;
     double seedOdds = (abilityModifier * 25 * (1.0 / genderOdds) * (1.0 / sizeOdds) * levelOdds * (1.0 / slotOdds));
@@ -272,7 +272,7 @@ uint64_t getTheoreticalGeneratorSeedsWithSizePairs(const PokemonVerificationCont
         }
     }
     double sizeOdds = getSizePairProbability(sizePairs);
-    double abilityModifier = 2;
+    double abilityModifier = data.abilities[0] == data.abilities[1] ? 1 : 2;
     double levelOdds = verifyConst.levelRange[1] ? verifyConst.levelRange[1] : 1.0; // 3 possible levels for an MMO
     double slotOdds = (verifyConst.slotThresholds[1] - verifyConst.slotThresholds[0]) / slotRateSum;
     double seedOdds = (abilityModifier * 25 * (1.0 / genderOdds) * (1.0 / sizeOdds) * levelOdds * (1.0 / slotOdds));

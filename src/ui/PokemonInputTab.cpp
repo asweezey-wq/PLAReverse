@@ -65,7 +65,8 @@ void PokemonInputTab::createForm()
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
-    QGroupBox* tableGroup = new QGroupBox(QString("Spawner Info"));
+    QHBoxLayout* hbox = new QHBoxLayout();
+    QGroupBox* tableGroup = new QGroupBox(QString("Spawner Info"), this);
     QFormLayout* outbreakForm = new QFormLayout();
 
     QComboBox* typeComboBox = new QComboBox();
@@ -80,7 +81,17 @@ void PokemonInputTab::createForm()
     connect(m_outbreakSpeciesComboBox, &QComboBox::currentIndexChanged, this, &PokemonInputTab::selectNewOutbreakSpecies);
     
     tableGroup->setLayout(outbreakForm);
-    mainLayout->addWidget(tableGroup);
+    hbox->addWidget(tableGroup, 6);
+
+    QPushButton* saveButton = new QPushButton("Save", this);
+    connect(saveButton, &QPushButton::clicked, this, [=]() {
+        auto filePath = m_outbreakSpeciesComboBox->currentText().toStdString() + ".json";
+        saveToJSON(filePath);
+        QMessageBox::information(this, "Save", QString("Saved to %1!").arg(filePath));
+    });
+    hbox->addWidget(saveButton, 1);
+
+    mainLayout->addLayout(hbox);
 
     QHBoxLayout* pokemonLayout = new QHBoxLayout();
 
@@ -229,6 +240,8 @@ void PokemonInputTab::populateDropdowns(PokemonInput* input)
 
     input->level->setValue(0);
     input->level->clear();
+    input->statsInputs.clear();
+    input->statsButton->setEnabled(true);
     for (int i = 0; i < 6; i++) {
         input->els[i]->setValue(0);
     }
@@ -247,8 +260,6 @@ void PokemonInputTab::populateDropdowns(PokemonInput* input)
     input->sizeInputs.clear();
     input->sizeButton->setEnabled(true);
 
-    input->statsInputs.clear();
-    input->statsButton->setEnabled(true);
     for (int i = 0; i < 2; i++) {
         input->computedHeight[i]->clear();
         input->computedWeight[i]->clear();
@@ -462,9 +473,9 @@ PokemonStatCalculator::PokemonStatCalculator(PokemonInput* input, QWidget *paren
 
     for (int i = 0; i < m_pokemonInput->statsInputs.size(); i++) {
         m_statsLayout->addWidget(widgetFromStatsInput(i));
-        for (int j = 0; j < 6; j++) {
-            connect(m_pokemonInput->statsInputs[i].stats[j], &QSpinBox::valueChanged, this, &PokemonStatCalculator::updateIVRanges);
-        }
+        // for (int j = 0; j < 6; j++) {
+        //     connect(m_pokemonInput->statsInputs[i].stats[j], &QSpinBox::valueChanged, this, &PokemonStatCalculator::updateIVRanges);
+        // }
     }
 
     QHBoxLayout* ivBox = new QHBoxLayout();
@@ -487,6 +498,18 @@ PokemonStatCalculator::PokemonStatCalculator(PokemonInput* input, QWidget *paren
     layout->addLayout(ratingsBox);
 
     layout->addWidget(scrollArea);
+
+    QHBoxLayout* nextLevelsHBox = new QHBoxLayout();
+    m_nextLevels.resize(6);
+    for (int i = 0; i < 6; i++) {
+        m_nextLevels[i] = new QLabel(QString("%1: 0 / 0").arg(STAT_NAMES[i]));
+        nextLevelsHBox->addWidget(m_nextLevels[i]);
+    }
+    layout->addLayout(nextLevelsHBox);
+
+    m_recommendAction = new QLabel("Recommended Action: ");
+    layout->addWidget(m_recommendAction);
+
     connect(m_addStatsButton, &QPushButton::clicked, this, &PokemonStatCalculator::addNewStats);
     layout->addWidget(m_addStatsButton);
 
@@ -525,6 +548,7 @@ QWidget* PokemonStatCalculator::widgetFromStatsInput(int index) {
     QHBoxLayout* statsBox = new QHBoxLayout();
     for (int i = 0; i < 6; i++) {
         statsBox->addWidget(statsInput.stats[i]);
+        connect(statsInput.stats[i], &QSpinBox::valueChanged, this, &PokemonStatCalculator::updateIVRanges);
     }
     form->addRow("Species:", statsInput.species);
     form->addRow("Level:", statsInput.level);
@@ -566,15 +590,65 @@ void PokemonStatCalculator::removeStatsInput(int index) {
 
 void PokemonStatCalculator::updateIVRanges() {
     m_pokemonInput->calculateIVs();
+    int minActionLevel = 999;
     for (int i = 0; i < 6; i++) {
         const char* styleSheet = "color: black;";
         if (m_pokemonInput->verifCtx.ivs[i][1] < m_pokemonInput->verifCtx.ivs[i][0]) {
             styleSheet = "color: red;";
+            m_nextLevels[i]->setText(QString("%1: INVALID").arg(STAT_NAMES[i]));
         } else if (m_pokemonInput->verifCtx.ivs[i][0] == m_pokemonInput->verifCtx.ivs[i][1]) {
             styleSheet = "color: green;";
+            m_nextLevels[i]->setText(QString("%1: DONE").arg(STAT_NAMES[i]));
+        } else if (m_pokemonInput->statsInputs.size() != 0) {
+            auto& lastStats = m_pokemonInput->statsInputs[m_pokemonInput->statsInputs.size() - 1];
+            auto& speciesData = PokemonData::getSpeciesData(PokemonData::getSpeciesID(lastStats.species->currentText().toStdString()));
+            const int levelsToSearch = 50;
+            uint8_t baseStat = speciesData.baseStats[i];
+            int minNextLevel = lastStats.level->value() + 1;
+            int range = m_pokemonInput->verifCtx.ivs[i][1] - m_pokemonInput->verifCtx.ivs[i][0] + 1;
+            std::vector<std::vector<int>> ivLevels(range);
+            for (int j = 0; j < ivLevels.size(); j++) {
+                ivLevels[j].resize(levelsToSearch);
+                for (int k = 0; k < ivLevels[j].size(); k++) {
+                    ivLevels[j][k] = i == 0 ? calculateHP(baseStat, m_pokemonInput->verifCtx.ivs[i][0] + j, 0, k + minNextLevel) : calculateOtherStat(baseStat, m_pokemonInput->verifCtx.ivs[i][0] + j, 0, k + minNextLevel, getNatureModifier((uint8_t)m_pokemonInput->nature->currentIndex(), i));
+                }
+            }
+
+            std::vector<int> ivMinLevel(range);
+            int minChange = levelsToSearch;
+            int maxChange = 0;
+            for (int j = 0; j < ivLevels.size(); j++) {
+                bool found = false;
+                for (int k = 0; k < ivLevels[j].size(); k++) {
+                    bool diffLeft = j != 0 && ivLevels[j][k] != ivLevels[j-1][k];
+                    bool diffRight = j != ivLevels.size() - 1 && ivLevels[j][k] != ivLevels[j+1][k];
+                    if (diffLeft || diffRight) {
+                        ivMinLevel[j] = k;
+                        if (k > maxChange) {
+                            maxChange = k;
+                        }
+                        if (k < minChange) {
+                            minChange = k;
+                        }
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    ivMinLevel[j] = levelsToSearch;
+                    maxChange = levelsToSearch;
+                }
+            }
+            minActionLevel = std::min(minActionLevel, minChange + minNextLevel);
+            m_nextLevels[i]->setText(QString("%1: %2 / %3").arg(STAT_NAMES[i]).arg(minChange + minNextLevel).arg(maxChange + minNextLevel));
         }
         m_ivs[i]->setText(QString("%1 - %2").arg((uint32_t)m_pokemonInput->verifCtx.ivs[i][0]).arg((uint32_t)m_pokemonInput->verifCtx.ivs[i][1]));
         m_ivs[i]->setStyleSheet(styleSheet);
+    }
+    if (minActionLevel != 999) {
+        m_recommendAction->setText(QString("Recommended Level: %1").arg(minActionLevel));
+    } else {
+        m_recommendAction->setText(QString("Recommended Level: "));
     }
 }
 

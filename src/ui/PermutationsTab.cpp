@@ -44,12 +44,13 @@ PermutationsTab::PermutationsTab(PokemonInputTab* inputTab, QWidget *parent)
     vbox->addWidget(startButton);
 
     m_tableWidget = new QTableWidget();
-    m_tableWidget->setColumnCount(7);
-    m_tableWidget->setHorizontalHeaderLabels({"Path", "Species", "Shiny", "Alpha", "Rolls", "IVs", "Nature"});
+    m_tableWidget->setColumnCount(9);
+    m_tableWidget->setHorizontalHeaderLabels({"Path", "Species", "Shiny", "Alpha", "Rolls", "IVs", "Nature", "Level", "Gender"});
     // m_tableWidget->verticalHeader()->setVisible(false);
     vbox->addWidget(m_tableWidget);
 
     setLayout(vbox);
+    updateSecondWaveTables();
 }
 
 uint64_t PermutationsTab::getPrimaryOutbreakTable() const {
@@ -190,4 +191,6 @@ void PermutationsTab::addResultToTable(PermutationResult result) {
     m_tableWidget->setItem(row, 4, new QTableWidgetItem(QString("%1").arg(result.pokemon.m_shinyRolls)));
     m_tableWidget->setItem(row, 5, new QTableWidgetItem(QString("%1/%2/%3/%4/%5/%6").arg(result.pokemon.m_ivs[0], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[1], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[2], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[3], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[4], 2, 10, QLatin1Char('0')).arg(result.pokemon.m_ivs[5], 2, 10, QLatin1Char('0'))));
     m_tableWidget->setItem(row, 6, new QTableWidgetItem(QString("%1").arg(NATURE_NAMES[result.pokemon.m_nature])));
+    m_tableWidget->setItem(row, 7, new QTableWidgetItem(QString("%1").arg(result.pokemon.m_level)));
+    m_tableWidget->setItem(row, 8, new QTableWidgetItem(QString("%1").arg(result.pokemon.m_gender)));
 }

@@ -285,7 +285,8 @@ bool HostReversalManager::reverseGroupSeeds(int index) {
     bool needsCarry = m_reversalCtx.groupReversalCtx.shiftConst[index] != 0;
     dim3 groupBlock(256, needsCarry ? 2 : 1);
     dim3 groupGrid(1 << 24, m_numGenSeeds);
-    printf("Checking group index %d (estimated %0.0f s)\n", index+1, 0.2f * m_numGenSeeds * (needsCarry ? 2 : 1));
+    float estimatedTime = 0.2f * m_numGenSeeds * (needsCarry ? 2 : 1);
+    printf("Checking group index %d (estimated %.1f min)\n", index+1, estimatedTime / 60);
     cudaEventRecord(m_start, 0);
     kernel_reverseGroupSeeds<<<groupGrid, groupBlock>>>(m_deviceGenSeedsBuf, index, device_numGroupSeeds, m_deviceGroupSeedsBuf);
     cudaEventRecord(m_stop, 0);

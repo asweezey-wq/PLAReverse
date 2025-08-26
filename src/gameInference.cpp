@@ -12,7 +12,7 @@ int getShinyRolls(uint8_t info) {
     }
 }
 
-constexpr float getNatureModifier(uint8_t nature, int stat) {
+float getNatureModifier(uint8_t nature, int stat) {
     auto effect = NATURE_EFFECTS[nature];
     if (effect.increased == effect.decreased) return 1.0f;
     if (effect.increased == stat) return 1.1f;
@@ -81,8 +81,13 @@ void restrictRangesForActualStats(const ObservedStatInstance& observedStats, uin
                 break;
             }
         }
-        ivRanges[i][0] = newMin;
-        ivRanges[i][1] = newMax;
+        if (newMax == -1) {
+            ivRanges[i][0] = 1;
+            ivRanges[i][1] = 0;
+        } else {
+            ivRanges[i][0] = newMin;
+            ivRanges[i][1] = newMax;
+        }
     }
 }
 

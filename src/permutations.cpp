@@ -17,7 +17,6 @@ PermutationsManager::PermutationsManager(uint64_t seed, uint64_t primaryTableID,
 std::vector<PermutationResult> PermutationsManager::findPermutations() {
     std::vector<PermutationUserAction> actionChain;
     std::vector<PermutationResult> results;
-    int index = 0;
     for (auto& p : m_startingState.respawn()) {
         results.emplace_back(actionChain, p);
     }
